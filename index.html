@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>设计植物自动灌溉物联网系统｜课堂互动游戏</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #eaf6ff 0%, #f1fff4 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #222;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(25, 118, 210, 0.12);
+    }
+
+    h1 {
+        text-align: center;
+        color: #1565C0;
+        font-size: 26px;
+        margin-bottom: 10px;
+    }
+
+    .desc {
+        text-align: center;
+        color: #555;
+        margin-bottom: 16px;
+        font-size: 15px;
+    }
+
+    /* 顶部关键步骤提示 */
+    .summary-top {
+        background: #fff8e1;
+        border-left: 4px solid #ffb300;
+        padding: 14px 18px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        color: #5d4037;
+    }
+
+    .summary-top strong {
+        color: #e65100;
+    }
+
+    /* 横向双栏 */
+    .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .column {
+        background: #f8fbff;
+        border-radius: 16px;
+        padding: 22px;
+        border: 2px dashed #90caf9;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .column h2 {
+        color: #1565C0;
+        margin-bottom: 10px;
+        font-size: 20px;
+    }
+
+    /* 左侧：植物培育区【压缩整体间距】 */
+    .grow-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom:8px;
+    }
+
+    .plant-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #2e7d32;
+    }
+
+    .clock-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        padding:8px 14px;
+        border-radius: 40px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .clock {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #fff;
+        border: 3px solid #1976D2;
+        position: relative;
+    }
+
+    .clock::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 2px;
+        height: 12px;
+        background: #1976D2;
+        transform-origin: bottom center;
+        transform: translate(-50%, -100%);
+    }
+
+    .clock::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 2px;
+        height: 9px;
+        background: #ff9800;
+        transform-origin: bottom center;
+        transform: translate(-50%, -100%) rotate(90deg);
+    }
+
+    .clock.running::before,
+    .clock.running::after {
+        animation: rotateClock 1s linear infinite;
+    }
+
+    @keyframes rotateClock {
+        from { transform: translate(-50%, -100%) rotate(0deg); }
+        to { transform: translate(-50%, -100%) rotate(360deg); }
+    }
+
+    .day-text {
+        font-weight: bold;
+        color: #1565C0;
+    }
+
+    .stage-text {
+        color: #555;
+        font-size: 14px;
+    }
+
+    /* 动画容器缩短高度，对齐右侧第一步选择题位置 */
+    .plant-stage-box {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        background: linear-gradient(180deg, #fff 0%, #eafff1 100%);
+        border-radius: 14px;
+        overflow: hidden;
+        min-height:220px;
+    }
+
+    .plant-svg-wrap {
+        position: relative;
+        z-index: 3;
+        transform: scale(0.82);
+        transform-origin: bottom center;
+        transition: opacity 0.45s ease, transform 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 植物生长过渡动画（出土弹跳感） */
+    @keyframes plantGrow {
+        0% { transform: scale(0.75) translateY(10px); opacity: 0.4; }
+        55% { transform: scale(0.86) translateY(-3px); opacity: 1; }
+        100% { transform: scale(0.82) translateY(0); opacity: 1; }
+    }
+    .plant-svg-wrap.grow-animate {
+        animation: plantGrow 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* 整株植物随风轻摇 */
+    @keyframes plantSway {
+        0%, 100% { transform: rotate(-1.4deg); }
+        50% { transform: rotate(1.4deg); }
+    }
+    .plant-svg-wrap .plant-body {
+        transform-origin: bottom center;
+        animation: plantSway 4.6s ease-in-out infinite;
+    }
+
+    /* 嫩芽出土（出土后再轻摇） */
+    @keyframes sprout {
+        0% { transform: scaleY(0.25) translateY(15px); opacity: 0.25; }
+        60% { transform: scaleY(1.08) translateY(-2px); opacity: 1; }
+        100% { transform: scaleY(1) translateY(0); opacity: 1; }
+    }
+    @keyframes sproutSway {
+        0%, 100% { transform: rotate(-2deg); }
+        50% { transform: rotate(2deg); }
+    }
+    .plant-svg-wrap .sprout {
+        transform-origin: bottom center;
+        animation: sprout 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                   sproutSway 3.8s 1.8s ease-in-out infinite;
+    }
+
+    /* 叶片轻颤（各自带轻微相位差） */
+    @keyframes leafSway {
+        0%, 100% { transform: rotate(-2.5deg); }
+        50% { transform: rotate(3deg); }
+    }
+    .plant-svg-wrap .leaf {
+        transform-box: fill-box;
+        transform-origin: center bottom;
+        animation: leafSway 3.6s ease-in-out infinite;
+    }
+    .plant-svg-wrap .leaf:nth-of-type(odd)  { animation-duration: 4.2s; animation-delay: -1.1s; }
+    .plant-svg-wrap .leaf:nth-of-type(even) { animation-duration: 3.9s; animation-delay: -0.6s; }
+
+    /* 番茄果实逐个浮现（长出来），再呼吸 */
+    @keyframes fruitGrow {
+        0% { transform: scale(0); opacity: 0; }
+        55% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fruitPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.07); }
+    }
+    .plant-svg-wrap .fruit {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: fruitGrow 1.3s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+                   fruitPulse 2.6s 1.3s ease-in-out infinite;
+    }
+
+    /* 花朵绽放 */
+    @keyframes bloom {
+        0% { transform: scale(0.3) rotate(-18deg); opacity: 0; }
+        60% { transform: scale(1.12) rotate(6deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .plant-svg-wrap .flower {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: bloom 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* 向日葵花瓣缓转 */
+    @keyframes petalSpin {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(6deg); }
+    }
+    .plant-svg-wrap .petals {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: petalSpin 7s ease-in-out infinite;
+    }
+
+    /* 花心轻脉 */
+    @keyframes centerPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    .plant-svg-wrap .flower-center {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: centerPulse 3s ease-in-out infinite;
+    }
+
+    /* 状态灯 */
+    .status-light {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #9e9e9e;
+        border: 3px solid #616161;
+        z-index: 5;
+    }
+
+    .status-light.warn {
+        background: #ff4444;
+        border-color: #b71c1c;
+        animation: blinkRed 0.6s infinite;
+    }
+
+    .status-light.normal {
+        background: #4caf50;
+        border-color: #2e7d32;
+    }
+
+    @keyframes blinkRed {
+        0%, 100% { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
+        50% { background: #ffcdd2; }
+    }
+
+    /* 水滴流动动画 */
+    .water-drop {
+        position: absolute;
+        top: -20px;
+        font-size:22px;
+        color: #2196F3;
+        z-index: 4;
+        pointer-events: none;
+    }
+
+    @keyframes drop {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(170px); opacity: 0; }
+    }
+
+    .water-drop.run {
+        animation: drop 1.2s ease-in forwards;
+    }
+
+    .grow-progress {
+        margin-top:10px;
+        background: #fff;
+        border-radius: 12px;
+        padding:10px 12px;
+    }
+
+    .progress-title {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 8px;
+    }
+
+    .progress-bar {
+        height: 12px;
+        background: #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        width: 25%;
+        background: linear-gradient(90deg, #66bb6a, #43a047);
+        border-radius: 10px;
+        transition: width 0.8s ease;
+    }
+
+    .stage-list {
+        display: flex;
+        justify-content: space-between;
+        margin-top:6px;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .stage-list span.active {
+        color: #2e7d32;
+        font-weight: bold;
+    }
+
+    /* 右侧：设计区 */
+    .setup-area {
+        background: #e8f4fd;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+
+    .setup-area h3 {
+        color: #0d47a1;
+        margin-bottom: 14px;
+    }
+
+    .plant-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .plant-card {
+        background: #fff;
+        border: 2px solid #c7e0f4;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.25s;
+    }
+
+    .plant-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(25, 118, 210, 0.15);
+    }
+
+    .plant-card.active {
+        border-color: #1976D2;
+        background: #e3f2fd;
+        box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.12);
+    }
+
+    .plant-card .emoji {
+        font-size: 44px;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 12px;
+    }
+
+    input[type="text"] {
+        flex: 1;
+        min-width: 220px;
+        padding: 10px 14px;
+        border: 1px solid #90caf9;
+        border-radius: 8px;
+        font-size: 15px;
+    }
+
+    button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: 0.2s;
+    }
+
+    .btn-primary {
+        background: #1976D2;
+        color: #fff;
+    }
+
+    .btn-primary:hover {
+        background: #1565C0;
+    }
+
+    .btn-success {
+        background: #43a047;
+        color: #fff;
+    }
+
+    .btn-success:hover {
+        background: #388e3c;
+    }
+
+    .btn-gray {
+        background: #e0e0e0;
+        color: #333;
+    }
+
+    .btn-gray:hover {
+        background: #bdbdbd;
+    }
+
+    button:disabled {
+        background: #bdbdbd;
+        color: #fff;
+        cursor: not-allowed;
+    }
+
+    /* 步骤区 */
+    .build-area h3 {
+        color: #1565C0;
+        margin-bottom: 14px;
+    }
+
+    /* 四张知识卡片：静态总览，运行后原地变动态 */
+    .process-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+
+    .process-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 14px;
+        text-align: center;
+        border: 2px solid #dde6f2;
+        position: relative;
+        transition: 0.4s;
+    }
+
+    .process-card .icon {
+        font-size: 36px;
+        margin-bottom: 6px;
+    }
+
+    .process-card h4 {
+        color: #1976D2;
+        margin-bottom: 4px;
+    }
+
+    .process-card p {
+        font-size: 13px;
+        color: #555;
+    }
+
+    /* 卡片动态状态 */
+    .process-card.active {
+        border-color: #1976D2;
+        background: #e3f2fd;
+        transform: translateY(-4px);
+        box-shadow: 0 6px 14px rgba(25, 118, 210, 0.18);
+    }
+
+    .process-card.done {
+        border-color: #43a047;
+        background: #e8f5e9;
+    }
+
+    /* 卡片之间的动态连接线 */
+    .process-line {
+        height: 2px;
+        background: #e0e0e0;
+        margin: 10px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .process-line.running::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 30%;
+        height: 100%;
+        background: #2196F3;
+        animation: flowData 2s linear infinite;
+    }
+
+    @keyframes flowData {
+        0% { left: -30%; }
+        100% { left: 100%; }
+    }
+
+    .process-status {
+        background: #f8fbff;
+        border-radius: 10px;
+        padding: 12px;
+        min-height: 60px;
+        border: 1px solid #c7e0f4;
+        font-size: 14px;
+        color: #444;
+    }
+
+    .process-status .step-item {
+        padding: 4px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .process-status .step-item.done::before {
+        content: "✅";
+    }
+
+    .process-status .step-item.running::before {
+        content: "⏳";
+    }
+
+    .process-status .step-item.pending::before {
+        content: "⬜";
+    }
+
+    .option-item {
+        background: #f5f9ff;
+        border: 2px solid #c7e0f4;
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.25s;
+    }
+
+    .option-item:hover {
+        background: #e3f2fd;
+    }
+
+    .option-item.selected {
+        background: #e3f2fd;
+        border-color: #1976D2;
+    }
+
+    .option-item.right {
+        background: #e8f5e9;
+        border-color: #43a047;
+    }
+
+    .option-item.wrong {
+        background: #ffebee;
+        border-color: #e53935;
+    }
+
+    .option-item.disabled {
+        pointer-events: none;
+        opacity: 0.4;
+    }
+
+    .step-card {
+        background: #fff;
+        border: 1px solid #dde6f2;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 12px;
+    }
+
+    .step-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #1976D2;
+        margin-bottom: 8px;
+    }
+
+    .step-desc {
+        color: #555;
+        margin-bottom: 12px;
+    }
+
+    .option-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .arrow-down {
+        text-align: center;
+        font-size: 24px;
+        color: #1976D2;
+        margin: 8px 0 12px;
+    }
+
+    .tip-popup {
+        position: fixed;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 14px 24px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 999;
+        display: none;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .tip-popup.ok {
+        background: #43a047;
+    }
+
+    .tip-popup.err {
+        background: #e53935;
+    }
+
+    .action-row {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 16px;
+    }
+
+    /* 湿度数值动态变化 */
+    .humidity-display{
+        position:absolute;
+        bottom:8px;
+        left:12px;
+        font-size:14px;
+        color:#0d47a1;
+    }
+</style>
+</head>
+<body>
+
+<div class="tip-popup" id="tipPopup"></div>
+
+<div class="container">
+    <h1>设计植物自动灌溉物联网系统</h1>
+    <p class="desc">小明外出旅行，家里的植物没人浇水。请搭建自动灌溉系统，帮小明照顾它！</p>
+
+    <!-- 顶部关键步骤提示 -->
+    <div class="summary-top">
+        <strong>设计物联网系统的关键步骤：</strong><br>
+        1. 明确问题：植物缺水，需要自动浇水；<br>
+        2. 选择模块：传感模块、通信模块、物联网平台、执行模块；<br>
+        3. 建立流程：采集数据 → 传输数据 → 判断逻辑 → 执行动作；<br>
+        4. 注意配合：模块之间缺一不可，否则系统无法自动工作。
+    </div>
+
+    <!-- 横向双栏布局 -->
+    <div class="two-column">
+        <!-- 左侧：植物培育动画区，缩短高度 -->
+        <div class="column">
+            <h2>植物培育区</h2>
+
+            <div class="grow-header">
+                <div>
+                    <div class="plant-title" id="showPlantName">请先给植物命名</div>
+                    <div class="stage-text" id="plantStageText">成长阶段：种子</div>
+                </div>
+                <div class="clock-box">
+                    <div class="clock" id="clock"></div>
+                    <div>
+                        <div class="day-text" id="dayText">第 1 天</div>
+                        <div class="stage-text" id="clockHint">系统未运行</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="plant-stage-box" id="plantStageBox">
+                <div class="status-light" id="statusLight"></div>
+                <div class="plant-svg-wrap" id="plantSvgWrap"></div>
+                <div class="humidity-display" id="humidityDisplay">土壤湿度：60%</div>
+            </div>
+
+            <div class="grow-progress">
+                <div class="progress-title">成长进度</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="stage-list">
+                    <span class="active" id="stage-0">种子</span>
+                    <span id="stage-1">幼苗</span>
+                    <span id="stage-2">成长中</span>
+                    <span id="stage-3">成熟</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：设计区 -->
+        <div class="column">
+            <div class="setup-area">
+                <h3>第一步：选择植物并命名</h3>
+
+                <div class="plant-cards" id="plantCards">
+                    <div class="plant-card active" data-plant="tomato">
+                        <span class="emoji">🍅</span>
+                        <div><strong>番茄</strong></div>
+                    </div>
+                    <div class="plant-card" data-plant="green">
+                        <span class="emoji">🪴</span>
+                        <div><strong>绿萝</strong></div>
+                    </div>
+                    <div class="plant-card" data-plant="sunflower">
+                        <span class="emoji">🌻</span>
+                        <div><strong>向日葵</strong></div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <input type="text" id="plantName" placeholder="给植物起个名字，可以用你的名字" />
+                    <button class="btn-primary" id="startBtn">开始培育</button>
+                </div>
+            </div>
+
+            <div class="build-area">
+                <h3>第二步：设计自动灌溉系统</h3>
+
+                <!-- 四张知识卡片：静态总览，运行后原地变动态 -->
+                <div class="process-cards" id="processCards">
+                    <div class="process-card" id="flow1">
+                        <div class="icon">📡</div>
+                        <h4>传感模块</h4>
+                        <p>检测土壤是否缺水</p>
+                    </div>
+                    <div class="process-card" id="flow2">
+                        <div class="icon">☁️</div>
+                        <h4>通信模块</h4>
+                        <p>把数据传到平台</p>
+                    </div>
+                    <div class="process-card" id="flow3">
+                        <div class="icon">🧠</div>
+                        <h4>物联网平台</h4>
+                        <p>判断并下发指令</p>
+                    </div>
+                    <div class="process-card" id="flow4">
+                        <div class="icon">💧</div>
+                        <h4>执行模块</h4>
+                        <p>启动水泵浇水</p>
+                    </div>
+                </div>
+
+                <!-- 卡片之间的动态连接线 -->
+                <div class="process-line" id="processLine"></div>
+
+                <!-- 动态状态显示 -->
+                <div class="process-status" id="processStatus">
+                    <div class="step-item pending">等待运行系统</div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title">步骤1：选择传感模块</div>
+                    <div class="step-desc">要自动浇水，首先要知道土壤是否缺水，应该选择哪个传感器？</div>
+                    <div class="option-group" id="step1">
+                        <div class="option-item" data-correct="false">光照传感器</div>
+                        <div class="option-item" data-correct="true">土壤湿度传感器</div>
+                        <div class="option-item" data-correct="false">温度传感器</div>
+                    </div>
+                </div>
+
+                <div class="arrow-down">⬇️</div>
+
+                <div class="step-card">
+                    <div class="step-title">步骤2：选择通信模块</div>
+                    <div class="step-desc">采集到湿度数据后，要把数据远程发送到平台，应该选择哪个模块？</div>
+                    <div class="option-group" id="step2">
+                        <div class="option-item" data-correct="true">无线通信模块</div>
+                        <div class="option-item" data-correct="false">LED指示灯</div>
+                        <div class="option-item" data-correct="false">蜂鸣器</div>
+                    </div>
+                </div>
+
+                <div class="arrow-down">⬇️</div>
+
+                <div class="step-card">
+                    <div class="step-title">步骤3：选择物联网平台</div>
+                    <div class="step-desc">数据传到平台后，由谁接收数据、判断是否缺水，并下发指令？</div>
+                    <div class="option-group" id="step3">
+                        <div class="option-item" data-correct="false">普通显示屏</div>
+                        <div class="option-item" data-correct="true">物联网云平台</div>
+                        <div class="option-item" data-correct="false">按键开关</div>
+                    </div>
+                </div>
+
+                <div class="arrow-down">⬇️</div>
+
+                <div class="step-card">
+                    <div class="step-title">步骤4：选择执行模块</div>
+                    <div class="step-desc">平台判断缺水后，哪个设备负责完成浇水动作？</div>
+                    <div class="option-group" id="step4">
+                        <div class="option-item" data-correct="false">风扇</div>
+                        <div class="option-item" data-correct="true">灌溉水泵</div>
+                        <div class="option-item" data-correct="false">补光灯</div>
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    <button class="btn-success" id="runSystemBtn" disabled>运行自动灌溉系统</button>
+                    <button class="btn-gray" id="resetBtn">重新开始</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // SVG 植物插画定义
+    function getTomatoSvg(stage) {
+        if (stage === 0) {
+            // 种子：土堆 + 种子
+            return `<svg width="120" height="130" viewBox="0 0 120 130">
+                <ellipse cx="60" cy="122" rx="40" ry="5" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="60" cy="118" rx="34" ry="7" fill="#8d6e63"/>
+                <ellipse cx="60" cy="116" rx="30" ry="5" fill="#a1887f" opacity="0.6"/>
+                <ellipse cx="60" cy="110" rx="7" ry="4.5" fill="#5d4037"/>
+                <ellipse cx="58" cy="109" rx="2" ry="1" fill="#8d6e63" opacity="0.7"/>
+            </svg>`;
+        }
+        if (stage === 1) {
+            // 幼苗：出土嫩芽 + 两片子叶
+            return `<svg width="120" height="150" viewBox="0 0 120 150">
+                <defs>
+                    <radialGradient id="tLeaf1" cx="40%" cy="30%">
+                        <stop offset="0%" stop-color="#a5d6a7"/>
+                        <stop offset="100%" stop-color="#388e3c"/>
+                    </radialGradient>
+                </defs>
+                <ellipse cx="60" cy="142" rx="40" ry="5" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="60" cy="138" rx="34" ry="7" fill="#8d6e63"/>
+                <g class="sprout">
+                    <path d="M60 138 Q58 120 60 95" stroke="#795548" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <g class="leaf">
+                        <path d="M60 110 Q42 104 35 88 Q52 84 60 105 Z" fill="url(#tLeaf1)"/>
+                        <path d="M60 110 Q50 100 42 92" stroke="#2e7d32" stroke-width="0.8" fill="none"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M60 110 Q78 104 85 88 Q68 84 60 105 Z" fill="url(#tLeaf1)"/>
+                        <path d="M60 110 Q70 100 78 92" stroke="#2e7d32" stroke-width="0.8" fill="none"/>
+                    </g>
+                </g>
+            </svg>`;
+        }
+        if (stage === 2) {
+            // 成长中：主干 + 多片叶子
+            return `<svg width="150" height="185" viewBox="0 0 150 185">
+                <defs>
+                    <radialGradient id="tLeaf2" cx="40%" cy="30%">
+                        <stop offset="0%" stop-color="#a5d6a7"/>
+                        <stop offset="100%" stop-color="#388e3c"/>
+                    </radialGradient>
+                    <linearGradient id="tStem2" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#5d4037"/>
+                        <stop offset="50%" stop-color="#8d6e63"/>
+                        <stop offset="100%" stop-color="#5d4037"/>
+                    </linearGradient>
+                </defs>
+                <ellipse cx="75" cy="178" rx="48" ry="6" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="75" cy="174" rx="40" ry="7" fill="#8d6e63"/>
+                <g class="plant-body">
+                    <path d="M75 174 Q73 135 75 95 Q76 75 75 55" stroke="url(#tStem2)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                    <path d="M75 130 Q55 115 40 92" stroke="url(#tStem2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <path d="M75 110 Q95 100 110 78" stroke="url(#tStem2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <g class="leaf">
+                        <path d="M40 92 Q22 86 16 68 Q34 62 44 82 Q46 88 40 92 Z" fill="url(#tLeaf2)"/>
+                        <path d="M40 92 Q33 80 26 72" stroke="#2e7d32" stroke-width="0.8" fill="none"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M110 78 Q128 72 134 54 Q116 48 106 68 Q104 74 110 78 Z" fill="url(#tLeaf2)"/>
+                        <path d="M110 78 Q117 66 124 58" stroke="#2e7d32" stroke-width="0.8" fill="none"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M60 68 Q44 62 38 48 Q56 42 66 58 Q68 64 60 68 Z" fill="url(#tLeaf2)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M90 56 Q106 50 112 36 Q94 30 84 46 Q82 52 90 56 Z" fill="url(#tLeaf2)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M75 95 Q60 88 54 76 Q72 70 80 86 Q82 92 75 95 Z" fill="url(#tLeaf2)"/>
+                    </g>
+                </g>
+            </svg>`;
+        }
+        // 成熟：茂密灌木 + 多颗番茄逐个长出（含未熟青果）
+        return `<svg width="220" height="240" viewBox="0 0 220 240">
+            <defs>
+                <radialGradient id="tLeaf3" cx="40%" cy="30%">
+                    <stop offset="0%" stop-color="#a5d6a7"/>
+                    <stop offset="100%" stop-color="#388e3c"/>
+                </radialGradient>
+                <linearGradient id="tStem3" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#5d4037"/>
+                    <stop offset="50%" stop-color="#8d6e63"/>
+                    <stop offset="100%" stop-color="#5d4037"/>
+                </linearGradient>
+                <radialGradient id="tFruit3" cx="35%" cy="30%">
+                    <stop offset="0%" stop-color="#ff8a80"/>
+                    <stop offset="55%" stop-color="#e53935"/>
+                    <stop offset="100%" stop-color="#b71c1c"/>
+                </radialGradient>
+                <radialGradient id="tFruitG" cx="35%" cy="30%">
+                    <stop offset="0%" stop-color="#c5e1a5"/>
+                    <stop offset="55%" stop-color="#7cb342"/>
+                    <stop offset="100%" stop-color="#558b2f"/>
+                </radialGradient>
+                <radialGradient id="tFruitO" cx="35%" cy="30%">
+                    <stop offset="0%" stop-color="#ffe0b2"/>
+                    <stop offset="55%" stop-color="#fb8c00"/>
+                    <stop offset="100%" stop-color="#e65100"/>
+                </radialGradient>
+            </defs>
+            <ellipse cx="110" cy="232" rx="68" ry="6" fill="#c9a66b" opacity="0.45"/>
+            <ellipse cx="110" cy="228" rx="58" ry="7" fill="#8d6e63"/>
+            <g class="plant-body">
+                <!-- 主干 + 多个侧枝（更茂密） -->
+                <path d="M110 228 Q108 175 110 115 Q112 85 110 48" stroke="url(#tStem3)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <path d="M110 185 Q80 165 48 130" stroke="url(#tStem3)" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M110 155 Q140 135 172 100" stroke="url(#tStem3)" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M110 115 Q85 100 60 70" stroke="url(#tStem3)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <path d="M110 105 Q135 90 162 60" stroke="url(#tStem3)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <path d="M110 70 Q95 55 78 36" stroke="url(#tStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <path d="M110 60 Q125 45 142 28" stroke="url(#tStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                <!-- 更多叶子，营造茂密灌木感 -->
+                <g class="leaf">
+                    <path d="M48 130 Q24 122 14 100 Q36 92 52 118 Q54 124 48 130 Z" fill="url(#tLeaf3)"/>
+                    <path d="M48 130 Q38 116 26 104" stroke="#2e7d32" stroke-width="0.8" fill="none"/>
+                </g>
+                <g class="leaf">
+                    <path d="M172 100 Q196 92 206 70 Q184 62 168 88 Q166 94 172 100 Z" fill="url(#tLeaf3)"/>
+                    <path d="M172 100 Q182 86 194 74" stroke="#2e7d32" stroke-width="0.8" fill="none"/>
+                </g>
+                <g class="leaf">
+                    <path d="M60 70 Q42 64 36 48 Q56 42 66 60 Q68 66 60 70 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M162 60 Q180 54 186 38 Q166 32 156 50 Q154 56 162 60 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M78 36 Q62 30 56 18 Q74 12 84 28 Q86 34 78 36 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M142 28 Q158 22 164 8 Q146 2 136 18 Q134 24 142 28 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M110 90 Q92 84 86 70 Q104 64 114 80 Q116 86 110 90 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M110 140 Q128 134 134 120 Q116 114 106 130 Q104 136 110 140 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M110 165 Q94 160 88 146 Q106 140 116 156 Q118 162 110 165 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M70 158 Q54 152 48 138 Q66 132 76 148 Q78 154 70 158 Z" fill="url(#tLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M150 145 Q166 140 172 126 Q154 120 144 136 Q142 142 150 145 Z" fill="url(#tLeaf3)"/>
+                </g>
+
+                <!-- 6 颗番茄，逐个长出（不同成熟度：红、橙、青绿） -->
+                <g class="fruit" style="animation-delay:0s, 1.3s;">
+                    <circle cx="52" cy="120" r="13" fill="url(#tFruit3)"/>
+                    <ellipse cx="48" cy="115" rx="3.5" ry="2" fill="#fff" opacity="0.55"/>
+                    <path d="M52 106 L46 101 L52 104 L58 101 Z" fill="#43a047"/>
+                    <path d="M52 106 L50 101 M52 106 L54 101" stroke="#2e7d32" stroke-width="0.8"/>
+                </g>
+                <g class="fruit" style="animation-delay:1.6s, 2.9s;">
+                    <circle cx="170" cy="92" r="12" fill="url(#tFruit3)"/>
+                    <ellipse cx="166" cy="88" rx="3" ry="1.8" fill="#fff" opacity="0.55"/>
+                    <path d="M170 79 L164 75 L170 77 L176 75 Z" fill="#43a047"/>
+                </g>
+                <g class="fruit" style="animation-delay:3.2s, 4.5s;">
+                    <circle cx="110" cy="148" r="14" fill="url(#tFruit3)"/>
+                    <ellipse cx="106" cy="143" rx="4" ry="2.5" fill="#fff" opacity="0.55"/>
+                    <path d="M110 133 L104 128 L110 131 L116 128 Z" fill="#43a047"/>
+                </g>
+                <g class="fruit" style="animation-delay:4.8s, 6.1s;">
+                    <circle cx="68" cy="68" r="9" fill="url(#tFruitO)"/>
+                    <ellipse cx="66" cy="65" rx="2.2" ry="1.4" fill="#fff" opacity="0.55"/>
+                    <path d="M68 59 L64 56 L68 57 L72 56 Z" fill="#43a047"/>
+                </g>
+                <g class="fruit" style="animation-delay:6.4s, 7.7s;">
+                    <circle cx="148" cy="56" r="9" fill="url(#tFruitO)"/>
+                    <ellipse cx="146" cy="53" rx="2.2" ry="1.4" fill="#fff" opacity="0.55"/>
+                    <path d="M148 47 L144 44 L148 45 L152 44 Z" fill="#43a047"/>
+                </g>
+                <g class="fruit" style="animation-delay:8s, 9.3s;">
+                    <circle cx="110" cy="32" r="8" fill="url(#tFruitG)"/>
+                    <ellipse cx="108" cy="29" rx="2" ry="1.2" fill="#fff" opacity="0.55"/>
+                    <path d="M110 24 L106 21 L110 22 L114 21 Z" fill="#43a047"/>
+                </g>
+            </g>
+        </svg>`;
+    }
+
+    function getGreenSvg(stage) {
+        if (stage === 0) {
+            // 种子：土堆 + 种子
+            return `<svg width="120" height="130" viewBox="0 0 120 130">
+                <ellipse cx="60" cy="122" rx="40" ry="5" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="60" cy="118" rx="34" ry="7" fill="#8d6e63"/>
+                <ellipse cx="60" cy="116" rx="30" ry="5" fill="#a1887f" opacity="0.6"/>
+                <ellipse cx="60" cy="110" rx="7" ry="4.5" fill="#5d4037"/>
+                <ellipse cx="58" cy="109" rx="2" ry="1" fill="#8d6e63" opacity="0.7"/>
+            </svg>`;
+        }
+        if (stage === 1) {
+            // 幼苗：出土嫩芽 + 两片心形叶
+            return `<svg width="120" height="150" viewBox="0 0 120 150">
+                <defs>
+                    <radialGradient id="gLeaf1" cx="40%" cy="30%">
+                        <stop offset="0%" stop-color="#c5e1a5"/>
+                        <stop offset="100%" stop-color="#2e7d32"/>
+                    </radialGradient>
+                </defs>
+                <ellipse cx="60" cy="142" rx="40" ry="5" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="60" cy="138" rx="34" ry="7" fill="#8d6e63"/>
+                <g class="sprout">
+                    <path d="M60 138 Q58 120 60 95" stroke="#7cb342" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <g class="leaf">
+                        <path d="M60 110 Q44 104 38 90 Q54 84 60 105 Z" fill="url(#gLeaf1)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M60 110 Q76 104 82 90 Q66 84 60 105 Z" fill="url(#gLeaf1)"/>
+                    </g>
+                </g>
+            </svg>`;
+        }
+        if (stage === 2) {
+            // 成长中：藤蔓开始悬垂 + 心形叶
+            return `<svg width="150" height="185" viewBox="0 0 150 185">
+                <defs>
+                    <radialGradient id="gLeaf2" cx="40%" cy="30%">
+                        <stop offset="0%" stop-color="#c5e1a5"/>
+                        <stop offset="100%" stop-color="#2e7d32"/>
+                    </radialGradient>
+                    <linearGradient id="gStem2" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#4a6b3d"/>
+                        <stop offset="50%" stop-color="#7cb342"/>
+                        <stop offset="100%" stop-color="#4a6b3d"/>
+                    </linearGradient>
+                </defs>
+                <ellipse cx="75" cy="178" rx="48" ry="6" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="75" cy="174" rx="40" ry="7" fill="#8d6e63"/>
+                <g class="plant-body">
+                    <path d="M75 174 Q72 135 75 90" stroke="url(#gStem2)" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <path d="M75 130 Q60 140 45 165" stroke="url(#gStem2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M75 130 Q90 140 105 165" stroke="url(#gStem2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M75 110 Q62 100 48 88" stroke="url(#gStem2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M75 110 Q88 100 102 88" stroke="url(#gStem2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <g class="leaf">
+                        <path d="M45 165 Q34 158 32 148 Q42 144 48 156 Q50 162 45 165 Z" fill="url(#gLeaf2)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M105 165 Q116 158 118 148 Q108 144 102 156 Q100 162 105 165 Z" fill="url(#gLeaf2)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M48 88 Q36 82 32 70 Q44 66 50 78 Q52 84 48 88 Z" fill="url(#gLeaf2)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M102 88 Q114 82 118 70 Q106 66 100 78 Q98 84 102 88 Z" fill="url(#gLeaf2)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M75 100 Q63 94 58 82 Q72 78 78 90 Q80 96 75 100 Z" fill="url(#gLeaf2)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M75 60 Q63 54 58 42 Q72 38 78 50 Q80 56 75 60 Z" fill="url(#gLeaf2)"/>
+                    </g>
+                </g>
+            </svg>`;
+        }
+        // 成熟：花盆 + 茂密心形叶 + 多条悬垂藤蔓
+        return `<svg width="240" height="260" viewBox="0 0 240 260">
+            <defs>
+                <radialGradient id="gLeaf3" cx="42%" cy="28%">
+                    <stop offset="0%" stop-color="#dcedc8"/>
+                    <stop offset="55%" stop-color="#7cb342"/>
+                    <stop offset="100%" stop-color="#2e7d32"/>
+                </radialGradient>
+                <linearGradient id="gLeaf3Dark" cx="50%" cy="50%">
+                    <stop offset="0%" stop-color="#9ccc65"/>
+                    <stop offset="100%" stop-color="#33691e"/>
+                </linearGradient>
+                <linearGradient id="gStem3" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#4a6b3d"/>
+                    <stop offset="50%" stop-color="#7cb342"/>
+                    <stop offset="100%" stop-color="#4a6b3d"/>
+                </linearGradient>
+                <linearGradient id="potG3" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#d7ccc8"/>
+                    <stop offset="55%" stop-color="#a1887f"/>
+                    <stop offset="100%" stop-color="#6d4c41"/>
+                </linearGradient>
+                <linearGradient id="potRim3" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#bcaaa4"/>
+                    <stop offset="100%" stop-color="#8d6e63"/>
+                </linearGradient>
+            </defs>
+            <!-- 地面阴影 -->
+            <ellipse cx="120" cy="252" rx="86" ry="6" fill="#c9a66b" opacity="0.4"/>
+            <!-- 花盆（陶盆） -->
+            <path d="M48 218 L62 252 L178 252 L192 218 Z" fill="url(#potG3)"/>
+            <ellipse cx="120" cy="218" rx="72" ry="9" fill="url(#potRim3)"/>
+            <ellipse cx="120" cy="217" rx="68" ry="6" fill="#3e2723" opacity="0.55"/>
+            <g class="plant-body">
+                <!-- 多条藤蔓：向上丛生 + 向两侧悬垂 -->
+                <path d="M120 218 Q114 165 118 105 Q120 78 116 50" stroke="url(#gStem3)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <path d="M120 218 Q116 188 110 168 Q102 145 96 120" stroke="url(#gStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <path d="M120 218 Q124 188 130 168 Q138 145 144 120" stroke="url(#gStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <!-- 左侧悬垂长藤蔓 -->
+                <path d="M120 215 Q82 210 56 230 Q44 244 36 232" stroke="url(#gStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <path d="M120 215 Q92 218 70 234 Q60 248 50 244" stroke="url(#gStem3)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+                <!-- 右侧悬垂长藤蔓 -->
+                <path d="M120 215 Q158 210 184 230 Q196 244 204 232" stroke="url(#gStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <path d="M120 215 Q148 218 170 234 Q180 248 190 244" stroke="url(#gStem3)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+                <!-- 中部上扬小藤 -->
+                <path d="M118 105 Q104 92 88 78" stroke="url(#gStem3)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                <path d="M118 105 Q132 92 148 78" stroke="url(#gStem3)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+
+                <!-- 心形叶（顶端凹、下端尖、左右对称，呈现实绿萝叶形） -->
+                <!-- 顶部丛生 -->
+                <g class="leaf"><path d="M116 50 Q104 38 100 24 Q108 18 116 30 Q124 18 132 24 Q128 38 116 50 Z" fill="url(#gLeaf3)"/><path d="M116 50 L116 30" stroke="#2e7d32" stroke-width="0.6" fill="none" opacity="0.6"/></g>
+                <g class="leaf"><path d="M96 120 Q84 108 80 94 Q88 88 96 100 Q104 88 112 94 Q108 108 96 120 Z" fill="url(#gLeaf3)"/><path d="M96 120 L96 100" stroke="#2e7d32" stroke-width="0.6" fill="none" opacity="0.6"/></g>
+                <g class="leaf"><path d="M144 120 Q132 108 128 94 Q136 88 144 100 Q152 88 160 94 Q156 108 144 120 Z" fill="url(#gLeaf3)"/><path d="M144 120 L144 100" stroke="#2e7d32" stroke-width="0.6" fill="none" opacity="0.6"/></g>
+                <g class="leaf"><path d="M110 168 Q98 156 94 142 Q102 136 110 148 Q118 136 126 142 Q122 156 110 168 Z" fill="url(#gLeaf3Dark)"/></g>
+                <g class="leaf"><path d="M130 168 Q118 156 114 142 Q122 136 130 148 Q138 136 146 142 Q142 156 130 168 Z" fill="url(#gLeaf3Dark)"/></g>
+
+                <!-- 左侧悬垂叶 -->
+                <g class="leaf"><path d="M36 232 Q24 220 20 206 Q28 200 36 212 Q44 200 52 206 Q48 220 36 232 Z" fill="url(#gLeaf3)"/></g>
+                <g class="leaf"><path d="M50 244 Q38 232 34 218 Q42 212 50 224 Q58 212 66 218 Q62 232 50 244 Z" fill="url(#gLeaf3Dark)"/></g>
+                <g class="leaf"><path d="M72 218 Q60 206 56 192 Q64 186 72 198 Q80 186 88 192 Q84 206 72 218 Z" fill="url(#gLeaf3)"/></g>
+                <g class="leaf"><path d="M92 200 Q80 188 76 174 Q84 168 92 180 Q100 168 108 174 Q104 188 92 200 Z" fill="url(#gLeaf3Dark)"/></g>
+
+                <!-- 右侧悬垂叶 -->
+                <g class="leaf"><path d="M204 232 Q192 220 188 206 Q196 200 204 212 Q212 200 220 206 Q216 220 204 232 Z" fill="url(#gLeaf3)"/></g>
+                <g class="leaf"><path d="M190 244 Q178 232 174 218 Q182 212 190 224 Q198 212 206 218 Q202 232 190 244 Z" fill="url(#gLeaf3Dark)"/></g>
+                <g class="leaf"><path d="M168 218 Q156 206 152 192 Q160 186 168 198 Q176 186 184 192 Q180 206 168 218 Z" fill="url(#gLeaf3)"/></g>
+                <g class="leaf"><path d="M148 200 Q136 188 132 174 Q140 168 148 180 Q156 168 164 174 Q160 188 148 200 Z" fill="url(#gLeaf3Dark)"/></g>
+
+                <!-- 中部向上叶 -->
+                <g class="leaf"><path d="M88 78 Q76 66 72 52 Q80 46 88 58 Q96 46 104 52 Q100 66 88 78 Z" fill="url(#gLeaf3)"/></g>
+                <g class="leaf"><path d="M148 78 Q136 66 132 52 Q140 46 148 58 Q156 46 164 52 Q160 66 148 78 Z" fill="url(#gLeaf3)"/></g>
+                <g class="leaf"><path d="M118 105 Q106 93 102 79 Q110 73 118 85 Q126 73 134 79 Q130 93 118 105 Z" fill="url(#gLeaf3Dark)"/></g>
+
+                <!-- 盆口丛生叶（增加茂密感） -->
+                <g class="leaf"><path d="M70 214 Q60 204 56 192 Q64 187 70 198 Q76 187 84 192 Q80 204 70 214 Z" fill="url(#gLeaf3Dark)"/></g>
+                <g class="leaf"><path d="M170 214 Q160 204 156 192 Q164 187 170 198 Q176 187 184 192 Q180 204 170 214 Z" fill="url(#gLeaf3Dark)"/></g>
+            </g>
+        </svg>`;
+    }
+
+    function getSunflowerSvg(stage) {
+        if (stage === 0) {
+            // 种子：土堆 + 种子
+            return `<svg width="120" height="130" viewBox="0 0 120 130">
+                <ellipse cx="60" cy="122" rx="40" ry="5" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="60" cy="118" rx="34" ry="7" fill="#8d6e63"/>
+                <ellipse cx="60" cy="116" rx="30" ry="5" fill="#a1887f" opacity="0.6"/>
+                <ellipse cx="60" cy="110" rx="7" ry="4.5" fill="#5d4037"/>
+                <ellipse cx="58" cy="109" rx="2" ry="1" fill="#8d6e63" opacity="0.7"/>
+            </svg>`;
+        }
+        if (stage === 1) {
+            // 幼苗：出土嫩芽 + 两片子叶
+            return `<svg width="120" height="150" viewBox="0 0 120 150">
+                <defs>
+                    <radialGradient id="sLeaf1" cx="40%" cy="30%">
+                        <stop offset="0%" stop-color="#aed581"/>
+                        <stop offset="100%" stop-color="#33691e"/>
+                    </radialGradient>
+                </defs>
+                <ellipse cx="60" cy="142" rx="40" ry="5" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="60" cy="138" rx="34" ry="7" fill="#8d6e63"/>
+                <g class="sprout">
+                    <path d="M60 138 Q58 120 60 95" stroke="#558b2f" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <g class="leaf">
+                        <path d="M60 110 Q42 104 35 88 Q52 84 60 105 Z" fill="url(#sLeaf1)"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M60 110 Q78 104 85 88 Q68 84 60 105 Z" fill="url(#sLeaf1)"/>
+                    </g>
+                </g>
+            </svg>`;
+        }
+        if (stage === 2) {
+            // 成长中：高茎 + 叶子 + 顶部小花苞
+            return `<svg width="150" height="195" viewBox="0 0 150 195">
+                <defs>
+                    <radialGradient id="sLeaf2" cx="40%" cy="30%">
+                        <stop offset="0%" stop-color="#aed581"/>
+                        <stop offset="100%" stop-color="#33691e"/>
+                    </radialGradient>
+                    <linearGradient id="sStem2" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#33691e"/>
+                        <stop offset="50%" stop-color="#558b2f"/>
+                        <stop offset="100%" stop-color="#33691e"/>
+                    </linearGradient>
+                </defs>
+                <ellipse cx="75" cy="188" rx="48" ry="6" fill="#c9a66b" opacity="0.45"/>
+                <ellipse cx="75" cy="184" rx="40" ry="7" fill="#8d6e63"/>
+                <g class="plant-body">
+                    <path d="M75 184 Q73 140 75 80 Q77 60 75 45" stroke="url(#sStem2)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                    <path d="M75 130 Q55 118 40 98" stroke="url(#sStem2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <path d="M75 115 Q95 105 110 85" stroke="url(#sStem2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <g class="leaf">
+                        <path d="M40 98 Q22 92 16 74 Q34 68 44 88 Q46 94 40 98 Z" fill="url(#sLeaf2)"/>
+                        <path d="M40 98 Q33 86 26 78" stroke="#33691e" stroke-width="0.8" fill="none"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M110 85 Q128 80 134 62 Q116 56 106 76 Q104 82 110 85 Z" fill="url(#sLeaf2)"/>
+                        <path d="M110 85 Q117 73 124 65" stroke="#33691e" stroke-width="0.8" fill="none"/>
+                    </g>
+                    <g class="leaf">
+                        <path d="M75 90 Q60 84 54 70 Q72 64 80 80 Q82 86 75 90 Z" fill="url(#sLeaf2)"/>
+                    </g>
+                    <g class="flower">
+                        <circle cx="75" cy="40" r="11" fill="#7cb342"/>
+                        <path d="M75 50 L70 44 L75 47 L80 44 Z" fill="#558b2f"/>
+                        <ellipse cx="75" cy="36" rx="6" ry="5" fill="#9ccc65"/>
+                    </g>
+                </g>
+            </svg>`;
+        }
+        // 成熟：高茎 + 宽大心形叶 + 现实向日葵花盘（16长瓣 + 花盘种子纹理）
+        return `<svg width="220" height="255" viewBox="0 0 220 255">
+            <defs>
+                <radialGradient id="sLeaf3" cx="42%" cy="28%">
+                    <stop offset="0%" stop-color="#dcedc8"/>
+                    <stop offset="55%" stop-color="#7cb342"/>
+                    <stop offset="100%" stop-color="#33691e"/>
+                </radialGradient>
+                <linearGradient id="sStem3" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#33691e"/>
+                    <stop offset="50%" stop-color="#558b2f"/>
+                    <stop offset="100%" stop-color="#33691e"/>
+                </linearGradient>
+                <linearGradient id="sPetal3" x1="0" y1="1" x2="0" y2="0">
+                    <stop offset="0%" stop-color="#f57f17"/>
+                    <stop offset="55%" stop-color="#ffc107"/>
+                    <stop offset="100%" stop-color="#fff59d"/>
+                </linearGradient>
+                <radialGradient id="sCenter3" cx="40%" cy="40%">
+                    <stop offset="0%" stop-color="#8d6e63"/>
+                    <stop offset="60%" stop-color="#5d4037"/>
+                    <stop offset="100%" stop-color="#3e2723"/>
+                </radialGradient>
+            </defs>
+            <ellipse cx="110" cy="248" rx="68" ry="6" fill="#c9a66b" opacity="0.45"/>
+            <ellipse cx="110" cy="244" rx="58" ry="7" fill="#8d6e63"/>
+            <g class="plant-body">
+                <!-- 高茎 -->
+                <path d="M110 244 Q107 180 110 110 Q113 80 110 60" stroke="url(#sStem3)" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <!-- 叶柄 -->
+                <path d="M110 190 Q80 175 50 145" stroke="url(#sStem3)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <path d="M110 170 Q140 155 170 125" stroke="url(#sStem3)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <path d="M110 130 Q90 120 65 100" stroke="url(#sStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <path d="M110 120 Q130 108 155 88" stroke="url(#sStem3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                <!-- 宽大心形叶（现实向日葵叶片更大、带锯齿感） -->
+                <g class="leaf">
+                    <path d="M50 145 Q22 134 8 110 Q14 96 32 102 Q24 92 22 78 Q40 78 46 96 Q52 84 64 86 Q60 102 50 116 Q56 124 50 145 Z" fill="url(#sLeaf3)"/>
+                    <path d="M50 145 Q38 130 24 110" stroke="#33691e" stroke-width="0.8" fill="none"/>
+                </g>
+                <g class="leaf">
+                    <path d="M170 125 Q198 114 212 90 Q206 76 188 82 Q196 72 198 58 Q180 58 174 76 Q168 64 156 66 Q160 82 170 96 Q164 104 170 125 Z" fill="url(#sLeaf3)"/>
+                    <path d="M170 125 Q182 110 196 90" stroke="#33691e" stroke-width="0.8" fill="none"/>
+                </g>
+                <g class="leaf">
+                    <path d="M65 100 Q44 90 32 70 Q40 56 56 64 Q50 54 50 40 Q66 42 72 60 Q78 50 88 52 Q84 68 65 100 Z" fill="url(#sLeaf3)"/>
+                </g>
+                <g class="leaf">
+                    <path d="M155 88 Q176 78 188 58 Q180 44 164 52 Q170 42 170 28 Q154 30 148 48 Q142 38 132 40 Q136 56 155 88 Z" fill="url(#sLeaf3)"/>
+                </g>
+
+                <!-- 向日葵花盘（现实版：16长瓣 + 花心带种子螺旋纹理） -->
+                <g class="flower">
+                    <g class="petals">
+                        <!-- 16 片长椭圆瓣，每片22.5度 -->
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(0 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(22.5 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(45 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(67.5 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(90 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(112.5 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(135 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(157.5 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(180 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(202.5 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(225 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(247.5 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(270 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(292.5 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(315 110 60)"/>
+                        <path d="M110 52 Q104 32 110 4 Q116 32 110 52 Z" fill="url(#sPetal3)" transform="rotate(337.5 110 60)"/>
+                    </g>
+                    <g class="flower-center">
+                        <!-- 花盘：外圈深褐 + 内圈浅褐，再叠加种子点阵（拟斐波那契纹理） -->
+                        <circle cx="110" cy="60" r="22" fill="url(#sCenter3)"/>
+                        <circle cx="110" cy="60" r="18" fill="#5d4037" opacity="0.6"/>
+                        <!-- 种子点阵 -->
+                        <circle cx="110" cy="60" r="1.6" fill="#3e2723"/>
+                        <circle cx="114" cy="62" r="1.4" fill="#3e2723"/>
+                        <circle cx="106" cy="62" r="1.4" fill="#3e2723"/>
+                        <circle cx="112" cy="56" r="1.4" fill="#3e2723"/>
+                        <circle cx="108" cy="56" r="1.4" fill="#3e2723"/>
+                        <circle cx="118" cy="60" r="1.4" fill="#3e2723"/>
+                        <circle cx="102" cy="60" r="1.4" fill="#3e2723"/>
+                        <circle cx="110" cy="68" r="1.4" fill="#3e2723"/>
+                        <circle cx="110" cy="52" r="1.4" fill="#3e2723"/>
+                        <circle cx="116" cy="66" r="1.3" fill="#3e2723"/>
+                        <circle cx="104" cy="66" r="1.3" fill="#3e2723"/>
+                        <circle cx="116" cy="54" r="1.3" fill="#3e2723"/>
+                        <circle cx="104" cy="54" r="1.3" fill="#3e2723"/>
+                        <circle cx="120" cy="64" r="1.2" fill="#3e2723"/>
+                        <circle cx="100" cy="64" r="1.2" fill="#3e2723"/>
+                        <circle cx="120" cy="56" r="1.2" fill="#3e2723"/>
+                        <circle cx="100" cy="56" r="1.2" fill="#3e2723"/>
+                        <circle cx="114" cy="72" r="1.2" fill="#3e2723"/>
+                        <circle cx="106" cy="72" r="1.2" fill="#3e2723"/>
+                        <circle cx="114" cy="48" r="1.2" fill="#3e2723"/>
+                        <circle cx="106" cy="48" r="1.2" fill="#3e2723"/>
+                        <circle cx="122" cy="60" r="1.1" fill="#3e2723"/>
+                        <circle cx="98" cy="60" r="1.1" fill="#3e2723"/>
+                    </g>
+                </g>
+            </g>
+        </svg>`;
+    }
+
+    // 植物阶段文案
+    const plantStageNames = {
+        tomato: ["种子", "幼苗", "长出枝叶", "结出番茄"],
+        green: ["种子", "幼苗", "枝叶增多", "长得茂密"],
+        sunflower: ["种子", "幼苗", "长高长叶", "开出向日葵"]
+    };
+
+    let currentPlant = "tomato";
+    let plantNameVal = "";
+    let stageIndex = 0;
+    let stepStatus = [false, false, false, false];
+    let systemRunning = false;
+    let animationLoopId = null;
+    const TOTAL_CYCLE = 20000; //灌溉流程一轮20秒（每阶段5秒，便于阅读）
+    const GROW_STAGE1 = 10000;  //10秒：幼苗
+    const GROW_STAGE2 = 22000;  //22秒：成长中
+    const GROW_STAGE3 = 35000;  //35秒：成熟，之后停留
+    let growthDone = false;     //植物是否已长成（成熟后停留，不再循环）
+    const DAY_TICK_MS = 1500;   //每1.5秒过一天（"时间快速流逝"）
+
+    const plantCards = document.getElementById("plantCards");
+    const plantNameInput = document.getElementById("plantName");
+    const startBtn = document.getElementById("startBtn");
+    const showPlantName = document.getElementById("showPlantName");
+    const plantStageText = document.getElementById("plantStageText");
+    const progressFill = document.getElementById("progressFill");
+    const statusLight = document.getElementById("statusLight");
+    const clock = document.getElementById("clock");
+    const dayText = document.getElementById("dayText");
+    const clockHint = document.getElementById("clockHint");
+    const runSystemBtn = document.getElementById("runSystemBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const tipPopup = document.getElementById("tipPopup");
+    const plantStageBox = document.getElementById("plantStageBox");
+    const plantSvgWrap = document.getElementById("plantSvgWrap");
+    const humidityDisplay = document.getElementById("humidityDisplay");
+    const processCards = document.getElementById("processCards");
+    const processLine = document.getElementById("processLine");
+    const processStatus = document.getElementById("processStatus");
+
+    const allStepElements = document.querySelectorAll("#step1 .option-item,#step2 .option-item,#step3 .option-item,#step4 .option-item");
+
+    // 初始化：模块选项全部禁用
+    disableAllOptions(true);
+
+    // 选择植物
+    plantCards.addEventListener("click", (e) => {
+        const card = e.target.closest(".plant-card");
+        if (!card) return;
+        document.querySelectorAll(".plant-card").forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        currentPlant = card.dataset.plant;
+    });
+
+    // 禁用/启用选项
+    function disableAllOptions(isDisable) {
+        allStepElements.forEach(item => {
+            if (isDisable) {
+                item.classList.add("disabled");
+            } else {
+                item.classList.remove("disabled");
+            }
+        });
+    }
+
+    // 开始培育：必须先命名
+    startBtn.onclick = () => {
+        const name = plantNameInput.value.trim();
+        if (!name) {
+            showTip("请先给植物起名字！", false);
+            return;
+        }
+        plantNameVal = name;
+        showPlantName.innerText = plantNameVal;
+        stageIndex = 0;
+        updatePlantDisplay();
+        disableAllOptions(false);
+        showTip("植物已创建，请搭建系统！", true);
+    };
+
+    // 即时提示
+    function showTip(msg, isOk) {
+        tipPopup.textContent = msg;
+        tipPopup.className = "tip-popup " + (isOk ? "ok" : "err");
+        tipPopup.style.display = "block";
+        setTimeout(() => {
+            tipPopup.style.display = "none";
+        }, 1300);
+    }
+
+    // 更新植物显示，淡出再淡入实现自然阶段过渡
+    function updatePlantDisplay() {
+        let newSvg = "";
+        if (currentPlant === "tomato") {
+            newSvg = getTomatoSvg(stageIndex);
+        } else if (currentPlant === "green") {
+            newSvg = getGreenSvg(stageIndex);
+        } else {
+            newSvg = getSunflowerSvg(stageIndex);
+        }
+
+        // 先缩小淡出，再切换并放大淡入
+        plantSvgWrap.style.opacity = "0";
+        plantSvgWrap.style.transform = "scale(0.78) translateY(8px)";
+
+        setTimeout(() => {
+            plantSvgWrap.innerHTML = newSvg;
+            plantSvgWrap.style.opacity = "1";
+            plantSvgWrap.style.transform = "scale(0.82) translateY(0)";
+        }, 280);
+
+        plantStageText.textContent = "成长阶段：" + plantStageNames[currentPlant][stageIndex];
+        progressFill.style.width = ((stageIndex + 1) / 4 * 100) + "%";
+
+        for (let i = 0; i < 4; i++) {
+            document.getElementById("stage-" + i).classList.toggle("active", i === stageIndex);
+        }
+    }
+
+    // 四个步骤选择
+    ["step1", "step2", "step3", "step4"].forEach((id, idx) => {
+        document.getElementById(id).addEventListener("click", (e) => {
+            const item = e.target.closest(".option-item");
+            if (!item) return;
+
+            const box = document.getElementById(id);
+            box.querySelectorAll(".option-item").forEach(i => {
+                i.classList.remove("selected", "right", "wrong");
+            });
+
+            item.classList.add("selected");
+            const isCorrect = item.dataset.correct === "true";
+
+            if (isCorrect) {
+                item.classList.add("right");
+                stepStatus[idx] = true;
+                showTip("步骤" + (idx + 1) + " 选择正确！", true);
+            } else {
+                item.classList.add("wrong");
+                stepStatus[idx] = false;
+                showTip("步骤" + (idx + 1) + " 选择错误，请重新选择！", false);
+            }
+
+            runSystemBtn.disabled = !stepStatus.every(s => s);
+        });
+    });
+
+    // 同步循环动画：
+    // 1) 植物培育区——单向生长（幼苗→成长中→成熟），成熟后停留，不再循环
+    // 2) 自动灌溉系统——独立循环（传感→通信→平台→执行），让学生看清楚每个模块
+    // 3) 天数快速流逝（每1.5秒过1天，递增显示）
+    function runSyncAnimationCycle(){
+        if(animationLoopId) cancelAnimationFrame(animationLoopId);
+        let startTime = performance.now();
+        let lastPhase = -1;
+        let lastDay = -1;
+
+        function animate(now){
+            const elapsed = now - startTime;
+
+            // 天数快速流逝（递增，不循环）
+            const day = 1 + Math.floor(elapsed / DAY_TICK_MS);
+            if(day !== lastDay){
+                dayText.textContent = "第 " + day + " 天";
+                lastDay = day;
+            }
+
+            // 植物单向生长（不随灌溉循环重置）
+            if(!growthDone){
+                if(elapsed >= GROW_STAGE1 && stageIndex < 1){
+                    stageIndex = 1; updatePlantDisplay();
+                }else if(elapsed >= GROW_STAGE2 && stageIndex < 2){
+                    stageIndex = 2; updatePlantDisplay();
+                }else if(elapsed >= GROW_STAGE3 && stageIndex < 3){
+                    stageIndex = 3; updatePlantDisplay();
+                    statusLight.classList.remove("warn");
+                    statusLight.classList.add("normal");
+                    growthDone = true;
+                }
+            }
+
+            // 自动灌溉系统循环（每阶段5秒，节奏放慢便于阅读）
+            // 0~5s：传感采集；5~10s：通信传输；10~15s：平台判断；15~20s：水泵灌溉
+            const progress = (elapsed % TOTAL_CYCLE) / TOTAL_CYCLE;
+            let humidityVal, phase;
+            if(progress < 0.25){
+                phase = 1;
+                setFlowActive(1);
+                updateFlowStatus("传感模块正在采集土壤湿度数据...");
+                humidityVal = 60 - progress * 120;
+            }else if(progress < 0.5){
+                phase = 2;
+                setFlowActive(2);
+                updateFlowStatus("通信模块正在把数据远程传输到物联网平台...");
+                humidityVal = 30 - (progress - 0.25) * 40;
+            }else if(progress < 0.75){
+                phase = 3;
+                setFlowActive(3);
+                updateFlowStatus("物联网平台判断：土壤缺水，下发浇水指令！");
+                statusLight.classList.add("warn");
+                humidityVal = 10;
+            }else{
+                phase = 4;
+                setFlowActive(4);
+                updateFlowStatus("执行模块收到指令，水泵启动，开始自动灌溉！");
+                humidityVal = 10 + (progress - 0.75) * 200;
+                if(Math.random() < 0.08){
+                    createWaterDrop();
+                }
+            }
+
+            // 新一轮循环开始时，重置流程卡片状态，让"执行"→"传感"过渡更清晰
+            if(phase === 1 && lastPhase === 4){
+                document.querySelectorAll(".process-card").forEach(m => {
+                    m.classList.remove("active", "done");
+                });
+                processLine.classList.remove("running");
+            }
+            lastPhase = phase;
+
+            humidityDisplay.textContent = "土壤湿度：" + Math.round(humidityVal) + "%";
+            animationLoopId = requestAnimationFrame(animate);
+        }
+
+        animationLoopId = requestAnimationFrame(animate);
+    }
+
+    // 运行系统
+    runSystemBtn.onclick = async () => {
+        if (!plantNameVal) {
+            showTip("请先给植物起名字！", false);
+            return;
+        }
+
+        if (systemRunning) return;
+        systemRunning = true;
+        runSystemBtn.disabled = true;
+
+        // 点击后自动滚动到页面顶部动画区
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+        clock.classList.add("running");
+        clockHint.textContent = "时间快速流逝";
+
+        // 开始同步循环动画
+        runSyncAnimationCycle();
+    };
+
+    // 重置
+    resetBtn.onclick = () => {
+        // 停止动画循环，并重置生长状态（让下次运行时植物从种子重新长起）
+        if(animationLoopId){
+            cancelAnimationFrame(animationLoopId);
+            animationLoopId = null;
+        }
+        growthDone = false;
+        stageIndex = 0;
+        plantNameVal = "";
+        stepStatus = [false, false, false, false];
+        systemRunning = false;
+        plantNameInput.value = "";
+        showPlantName.textContent = "请先给植物命名";
+        statusLight.className = "status-light";
+        clock.classList.remove("running");
+        dayText.textContent = "第 1 天";
+        clockHint.textContent = "系统未运行";
+        humidityDisplay.textContent = "土壤湿度：--%";
+        runSystemBtn.disabled = true;
+        updatePlantDisplay();
+
+        disableAllOptions(true);
+
+        ["step1", "step2", "step3", "step4"].forEach(id => {
+            document.getElementById(id).querySelectorAll(".option-item").forEach(i => {
+                i.classList.remove("selected", "right", "wrong");
+            });
+        });
+
+        document.querySelectorAll(".water-drop").forEach(d => d.remove());
+        resetFlowAnimation();
+        showTip("已重新开始", true);
+    };
+
+    // 工具函数
+    function sleep(ms) {
+        return new Promise(r => setTimeout(r, ms));
+    }
+
+    function createWaterDrop() {
+        const drop = document.createElement("div");
+        drop.className = "water-drop run";
+        drop.textContent = "💧";
+        drop.style.left = (40 + Math.random() * 130) + "px";
+        plantStageBox.appendChild(drop);
+        setTimeout(() => drop.remove(), 1000);
+    }
+
+    // 右侧流程动画控制
+    function initFlowAnimation() {
+        document.querySelectorAll(".process-card").forEach(m => {
+            m.classList.remove("active", "done");
+        });
+        processLine.classList.remove("running");
+        processStatus.innerHTML = `
+            <div class="step-item pending">等待运行系统</div>
+        `;
+    }
+
+    function setFlowActive(num) {
+        document.querySelectorAll(".process-card").forEach(m => {
+            m.classList.remove("active");
+            m.classList.add("done");
+        });
+        document.getElementById("flow" + num).classList.add("active");
+        processLine.classList.add("running");
+    }
+
+    function updateFlowStatus(text) {
+        processStatus.innerHTML = `
+            <div class="step-item running">${text}</div>
+        `;
+    }
+
+    function resetFlowAnimation() {
+        document.querySelectorAll(".process-card").forEach(m => {
+            m.classList.remove("active", "done");
+        });
+        processLine.classList.remove("running");
+        processStatus.innerHTML = `
+            <div class="step-item pending">等待运行系统</div>
+        `;
+    }
+    initFlowAnimation();
+</script>
+
+</body>
+</html>
